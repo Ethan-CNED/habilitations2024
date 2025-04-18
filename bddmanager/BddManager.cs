@@ -6,9 +6,9 @@ namespace habilitations2024.bddmanager
     /// Singleton : connexion à la base de données et exécution des requêtes
     public class BddManager
     {
-        /// instance unique de la classe
+        /// Instance unique de la classe
         private static BddManager instance = null;
-        /// objet de connexion à la BDD à partir d'une chaîne de connexion
+        /// Objet de connexion à la BDD à partir d'une chaîne de connexion
         private readonly MySqlConnection connection;
 
         /// Constructeur pour créer la connexion à la BDD et l'ouvrir
@@ -30,7 +30,7 @@ namespace habilitations2024.bddmanager
 
         /// Exécution d'une requête autre que "select"
         /// <param name="stringQuery">requête autre que select</param>
-        /// <param name="parameters">dictionnire contenant les parametres</param>
+        /// <param name="parameters">dictionnaire contenant les paramètres</param>
         public void ReqUpdate(string stringQuery, Dictionary<string, object> parameters = null)
         {
             MySqlCommand command = new MySqlCommand(stringQuery, connection);
@@ -45,5 +45,41 @@ namespace habilitations2024.bddmanager
             command.ExecuteNonQuery();
         }
 
+        /// Exécution d'une requête "SELECT"
+        /// <param name="stringQuery">requête SQL SELECT</param>
+        /// <param name="parameters">dictionnaire contenant les paramètres</param>
+        /// <returns>Liste de tableaux d'objets contenant chaque ligne du résultat</returns>
+        public List<object[]> ReqSelect(string stringQuery, Dictionary<string, object> parameters = null)
+        {
+            List<object[]> records = new List<object[]>(); // Liste des résultats
+
+            MySqlCommand command = new MySqlCommand(stringQuery, connection);
+
+            // Ajout des paramètres à la requête si nécessaires
+            if (!(parameters is null))
+            {
+                foreach (KeyValuePair<string, object> parameter in parameters)
+                {
+                    command.Parameters.Add(new MySqlParameter(parameter.Key, parameter.Value));
+                }
+            }
+
+            command.Prepare();
+
+            // Exécuter la requête et récupérer les résultats
+            using (MySqlDataReader reader = command.ExecuteReader())
+            {
+                int nbCols = reader.FieldCount; // Nombre de colonnes
+
+                while (reader.Read()) // Parcourt chaque ligne du résultat
+                {
+                    object[] attributs = new object[nbCols]; // Création d'un tableau d'objets
+                    reader.GetValues(attributs); // Remplissage du tableau avec les valeurs
+                    records.Add(attributs); // Ajout à la liste
+                }
+            }
+
+            return records; // Retourne la liste des résultats
+        }
     }
 }
