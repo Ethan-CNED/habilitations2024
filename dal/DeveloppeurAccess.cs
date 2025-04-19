@@ -8,12 +8,48 @@ namespace habilitations2024.dal
     public class DeveloppeurAccess
     {
         // Instance unique de l'accès aux données
-        private readonly Access access = null;
+        private readonly Access access;
 
         // Constructeur qui initialise l’accès aux données
         public DeveloppeurAccess()
         {
             access = Access.GetInstance();
+        }
+
+        // Méthode de contrôle de l'authentification d'un administrateur
+        public bool ControleAuthentification(Admin admin)
+        {
+            try
+            {
+                // Requête SQL avec jointure pour vérifier si l'utilisateur est bien un administrateur
+                string query = @"
+                    SELECT COUNT(*) 
+                    FROM developpeur d
+                    JOIN profil p ON d.idprofil = p.idprofil
+                    WHERE d.nom = @nom
+                      AND d.prenom = @prenom
+                      AND d.pwd = SHA2(@pwd, 256)
+                      AND p.nom = 'admin'";
+
+                // Paramètres sécurisés pour éviter l'injection SQL
+                Dictionary<string, object> parameters = new Dictionary<string, object>
+                {
+                    { "@nom", admin.Nom },
+                    { "@prenom", admin.Prenom },
+                    { "@pwd", admin.Password }
+                };
+
+                // Exécuter la requête et récupérer le nombre de correspondances
+                int count = Convert.ToInt32(access.Manager.ReqSelectScalar(query, parameters));
+
+                // Si une ligne correspond, l'authentification est réussie
+                return count > 0;
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show("Erreur lors de l'authentification : " + e.Message);
+                return false;
+            }
         }
 
         // Récupère et retourne la liste des développeurs avec le vrai nom de leur profil

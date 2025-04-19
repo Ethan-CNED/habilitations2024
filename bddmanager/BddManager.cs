@@ -29,8 +29,6 @@ namespace habilitations2024.bddmanager
         }
 
         /// Exécution d'une requête autre que "select"
-        /// <param name="stringQuery">requête autre que select</param>
-        /// <param name="parameters">dictionnaire contenant les paramètres</param>
         public void ReqUpdate(string stringQuery, Dictionary<string, object> parameters = null)
         {
             MySqlCommand command = new MySqlCommand(stringQuery, connection);
@@ -46,9 +44,6 @@ namespace habilitations2024.bddmanager
         }
 
         /// Exécution d'une requête "SELECT"
-        /// <param name="stringQuery">requête SQL SELECT</param>
-        /// <param name="parameters">dictionnaire contenant les paramètres</param>
-        /// <returns>Liste de tableaux d'objets contenant chaque ligne du résultat</returns>
         public List<object[]> ReqSelect(string stringQuery, Dictionary<string, object> parameters = null)
         {
             List<object[]> records = new List<object[]>(); // Liste des résultats
@@ -80,6 +75,28 @@ namespace habilitations2024.bddmanager
             }
 
             return records; // Retourne la liste des résultats
+        }
+
+        /// Exécution d'une requête "SELECT" qui retourne une seule valeur (exemple : COUNT(*))
+        public object ReqSelectScalar(string stringQuery, Dictionary<string, object> parameters = null)
+        {
+            object result = null;
+
+            MySqlCommand command = new MySqlCommand(stringQuery, connection);
+
+            // Ajout des paramètres à la requête si nécessaires
+            if (!(parameters is null))
+            {
+                foreach (KeyValuePair<string, object> parameter in parameters)
+                {
+                    command.Parameters.Add(new MySqlParameter(parameter.Key, parameter.Value));
+                }
+            }
+
+            command.Prepare();
+            result = command.ExecuteScalar(); // Récupère la valeur scalaire
+
+            return result;
         }
     }
 }
