@@ -12,6 +12,7 @@ namespace habilitations2024.controller
         // Objet d'accès aux opérations possibles sur Profil
         private readonly ProfilAccess profilAccess;
 
+
         // Constructeur qui initialise l'accès aux données
         public FrmHabilitationsController()
         {
@@ -20,10 +21,11 @@ namespace habilitations2024.controller
         }
 
         // Récupère et retourne la liste des développeurs
-        public List<Developpeur> GetLesDeveloppeur()
+        public List<Developpeur> GetLesDeveloppeur(string filtreProfil = null)
         {
-            return developpeurAccess.GetLesDeveloppeur();
+            return developpeurAccess.GetLesDeveloppeur(filtreProfil); 
         }
+
 
         // Récupère et retourne la liste des profils
         public List<Profil> GetLesProfil()

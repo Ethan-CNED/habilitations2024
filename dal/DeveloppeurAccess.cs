@@ -53,49 +53,62 @@ namespace habilitations2024.dal
         }
 
         // Récupère et retourne la liste des développeurs avec le vrai nom de leur profil
-        public List<Developpeur> GetLesDeveloppeur()
+        public List<Developpeur> GetLesDeveloppeur(string filtreProfil = null, bool testMode = false)
         {
             List<Developpeur> lesDeveloppeurs = new List<Developpeur>();
 
             try
             {
-                // Requête avec jointure pour récupérer le nom réel du profil via la table "profil"
                 string query = @"
-                    SELECT d.iddeveloppeur, d.nom, d.prenom, d.tel, d.mail, 
-                           p.idprofil, p.nom AS nomProfil
-                    FROM developpeur d
-                    JOIN profil p ON d.idprofil = p.idprofil";
+        SELECT d.iddeveloppeur, d.nom, d.prenom, d.tel, d.mail, 
+               p.idprofil, p.nom AS nomProfil
+        FROM developpeur d
+        JOIN profil p ON d.idprofil = p.idprofil";
 
-                List<object[]> records = access.Manager.ReqSelect(query);
+                Dictionary<string, object> parameters = new Dictionary<string, object>();
 
-                if (records != null)
+                if (!string.IsNullOrWhiteSpace(filtreProfil))
                 {
-                    foreach (object[] record in records)
+                    query += " WHERE p.nom = @profil";
+                    parameters.Add("@profil", filtreProfil);
+                }
+
+                List<object[]> records = access.Manager.ReqSelect(query, parameters);
+
+                foreach (object[] record in records)
+                {
+                    int id = Convert.ToInt32(record[0]);
+                    string nom = record[1]?.ToString() ?? "Nom inconnu";
+                    string prenom = record[2]?.ToString() ?? "Prénom inconnu";
+                    string tel = record[3]?.ToString() ?? "Téléphone inconnu";
+                    string mail = record[4]?.ToString() ?? "Mail inconnu";
+                    int idProfil = Convert.ToInt32(record[5]);
+                    string nomProfil = record[6]?.ToString() ?? "Profil inconnu";
+
+                    Profil profil = new Profil(idProfil, nomProfil);
+                    Developpeur developpeur = new Developpeur(id, nom, prenom, tel, mail, profil);
+                    lesDeveloppeurs.Add(developpeur);
+                }
+
+                // Validation automatique avec CountDeveloppeurs
+                if (testMode)
+                {
+                    int expectedCount = CountDeveloppeurs(filtreProfil);  // Appelle automatiquement pour obtenir le nombre attendu
+
+                    if (lesDeveloppeurs.Count != expectedCount)
                     {
-                        int id = Convert.ToInt32(record[0]);
-                        string nom = record[1]?.ToString() ?? "Nom inconnu";
-                        string prenom = record[2]?.ToString() ?? "Prénom inconnu";
-                        string tel = record[3]?.ToString() ?? "Téléphone inconnu";
-                        string mail = record[4]?.ToString() ?? "Mail inconnu";
-                        int idProfil = Convert.ToInt32(record[5]);
-                        string nomProfil = record[6]?.ToString() ?? "Nom inconnu";
-
-                        // Création de l'objet Profil avec le nom correct récupéré via la jointure
-                        Profil profil = new Profil(idProfil, nomProfil);
-
-                        // Création de l'objet Developpeur en lui affectant son Profil complet
-                        Developpeur developpeur = new Developpeur(id, nom, prenom, tel, mail, profil);
-                        lesDeveloppeurs.Add(developpeur);
+                        throw new Exception($"Test échoué : Attendu {expectedCount}, trouvé {lesDeveloppeurs.Count}.");
                     }
                 }
             }
             catch (Exception e)
             {
-                MessageBox.Show("Erreur SQL : " + e.Message);
+                MessageBox.Show("Erreur SQL ou validation : " + e.Message);
             }
 
             return lesDeveloppeurs;
         }
+
 
         // Méthode de suppression d'un développeur
         public void DelDeveloppeur(Developpeur developpeur)
@@ -178,5 +191,78 @@ namespace habilitations2024.dal
                 Console.WriteLine("Erreur changement de mot de passe : " + e.Message);
             }
         }
+        public int CountDeveloppeurs(string filtreProfil = null)
+        {
+            try
+            {
+                string query = @"
+        SELECT COUNT(*)
+        FROM developpeur d
+        JOIN profil p ON d.idprofil = p.idprofil";
+
+                Dictionary<string, object> parameters = new Dictionary<string, object>();
+
+                if (!string.IsNullOrWhiteSpace(filtreProfil))
+                {
+                    query += " WHERE p.nom = @profil";
+                    parameters.Add("@profil", filtreProfil);
+                }
+
+                List<object[]> result = access.Manager.ReqSelect(query, parameters);
+
+                // Retourne le résultat de la requête COUNT(*)
+                return Convert.ToInt32(result[0][0]);
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show("Erreur lors du comptage des développeurs : " + e.Message);
+                return 0;
+            }
+        }
+
+        public void LancerTests(string filtreProfil)
+        {
+            var developpeurAccess = new DeveloppeurAccess();
+
+            try
+            {
+                // Indiquer quel test est en cours en fonction du filtre
+                if (!string.IsNullOrWhiteSpace(filtreProfil))
+                {
+                    Console.WriteLine($"\nTest : Vérification pour le profil '{filtreProfil}'...");
+                }
+                else
+                {
+                    Console.WriteLine("\nTest : Vérification sans filtre (tous les développeurs)...");
+                }
+
+                // Exécuter le test unitaire avec ou sans filtre
+                developpeurAccess.GetLesDeveloppeur(filtreProfil, true);
+
+                // Afficher un message de réussite en fonction du filtre
+                if (!string.IsNullOrWhiteSpace(filtreProfil))
+                {
+                    Console.WriteLine("Test réussi : Le nombre de développeurs pour le profil '{filtreProfil}' est correct.");
+                }
+                else
+                {
+                    Console.WriteLine("Test réussi : Le nombre total de développeurs est correct.");
+                }
+            }
+            catch (Exception ex)
+            {
+                // En cas d'échec, afficher une erreur avec le contexte
+                if (!string.IsNullOrWhiteSpace(filtreProfil))
+                {
+                    Console.WriteLine("Test échoué pour le profil '{filtreProfil}' : {ex.Message}");
+                }
+                else
+                {
+                    Console.WriteLine("Test échoué pour tous les développeurs : {ex.Message}");
+                }
+            }
+        }
+
+
     }
 }

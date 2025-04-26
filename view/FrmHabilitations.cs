@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Windows.Forms;
 using habilitations2024.controller;
 using habilitations2024.model;
+using habilitations2024.dal;
 
 namespace habilitations2024.view
 {
@@ -10,22 +11,27 @@ namespace habilitations2024.view
     {
         private FrmHabilitationsController controller;
         private Developpeur newDev; // instance globale dans le formulaire
+        private readonly Access access;
 
         public FrmHabilitations()
         {
             InitializeComponent();
+            access = Access.GetInstance();
             controller = new FrmHabilitationsController();
             this.Load += FrmHabilitations_Load;
             // On instancie newDev avec le constructeur par défaut (avec des parenthèses)
             newDev = new Developpeur();
             textBox1.PasswordChar = '*';
             textBox2.PasswordChar = '*';
+
         }
 
         private void FrmHabilitations_Load(object sender, EventArgs e)
         {
+            RemplirComboFiltre();
             LoadDeveloppeurs();
             LoadProfils();
+
         }
 
         private void LoadDeveloppeurs()
@@ -211,6 +217,73 @@ namespace habilitations2024.view
             }
         }
 
+        private void RemplirComboFiltre()
+        {
+            cboFiltre.Items.Clear();
+            cboFiltre.Items.Add(""); // Ajout de la ligne vide pour "Tous les profils"
+
+            try
+            {
+                // Récupérer tous les profils depuis la base
+                string query = "SELECT nom FROM profil";
+                List<object[]> records = access.Manager.ReqSelect(query, new Dictionary<string, object>()); // Pas besoin de paramètres
+
+                foreach (object[] record in records)
+                {
+                    cboFiltre.Items.Add(record[0]?.ToString());
+                }
+
+                // Laissez par défaut la première ligne vide quand l'application sera éxéctué 
+                cboFiltre.SelectedIndex = 0;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Erreur lors du chargement des profils : " + ex.Message);
+            }
+        }
+
+
+        private void cboFiltre_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            string filtreProfil = cboFiltre.SelectedItem?.ToString();
+            if (string.IsNullOrWhiteSpace(filtreProfil))
+            {
+                filtreProfil = null; // Si aucun profil sélectionné, afficher tous les développeurs
+            }
+
+            ChargerListeDeveloppeurs(filtreProfil);
+
+            var tests = new DeveloppeurAccess();
+            tests.LancerTests(filtreProfil);
+        }
+
+
+        private void ChargerListeDeveloppeurs(string filtreProfil = null)
+        {
+            dataGridView1.DataSource = null;
+
+            // Vérifie si filtreProfil est vide pour afficher tous les développeurs
+            if (string.IsNullOrWhiteSpace(filtreProfil))
+            {
+                filtreProfil = null;  // Si aucun profil sélectionné, afficher tous les développeurs
+            }
+
+            // Récupérer les développeurs filtrés depuis le contrôleur
+            List<Developpeur> developpeurs = controller.GetLesDeveloppeur(filtreProfil);
+
+            if (developpeurs.Count > 0)
+            {
+                dataGridView1.DataSource = developpeurs;
+            }
+            else
+            {
+                MessageBox.Show("Aucun développeur trouvé avec ce profil !");
+            }
+        }
+
+
+
+
         private void annuler_pwd_Click(object sender, EventArgs e)
         {
             panel3.Enabled = false;
@@ -261,5 +334,6 @@ namespace habilitations2024.view
             // Exemple d'utilisation de l'instance globale dans le formulaire
             Program.GlobalDeveloppeur.Nom = textbox_Name.Text;
         }
+
     }
 }

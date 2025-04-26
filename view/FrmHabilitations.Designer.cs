@@ -51,6 +51,7 @@
             this.label9 = new System.Windows.Forms.Label();
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.label7 = new System.Windows.Forms.Label();
+            this.cboFiltre = new System.Windows.Forms.ComboBox();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.panel1.SuspendLayout();
             this.panel2.SuspendLayout();
@@ -198,6 +199,7 @@
             // panel1
             // 
             this.panel1.BackColor = System.Drawing.Color.Transparent;
+            this.panel1.Controls.Add(this.cboFiltre);
             this.panel1.Controls.Add(this.dataGridView1);
             this.panel1.Controls.Add(this.modifier);
             this.panel1.Controls.Add(this.supprimer);
@@ -337,6 +339,15 @@
             this.label7.TabIndex = 0;
             this.label7.Text = "changer le mot de passe";
             // 
+            // cboFiltre
+            // 
+            this.cboFiltre.FormattingEnabled = true;
+            this.cboFiltre.Location = new System.Drawing.Point(547, 270);
+            this.cboFiltre.Name = "cboFiltre";
+            this.cboFiltre.Size = new System.Drawing.Size(161, 21);
+            this.cboFiltre.TabIndex = 5;
+            this.cboFiltre.SelectedIndexChanged += new System.EventHandler(this.cboFiltre_SelectedIndexChanged);
+            // 
             // FrmHabilitations
             // 
             this.ClientSize = new System.Drawing.Size(773, 597);
@@ -387,6 +398,7 @@
         private System.Windows.Forms.Label label10;
         private System.Windows.Forms.Button Enregistrer_pwd;
         private System.Windows.Forms.TextBox textBox2;
+        private System.Windows.Forms.ComboBox cboFiltre;
     }
 }
 
