@@ -220,13 +220,13 @@ namespace habilitations2024.view
         private void RemplirComboFiltre()
         {
             cboFiltre.Items.Clear();
-            cboFiltre.Items.Add(""); // Ajout de la ligne vide pour "Tous les profils"
+            cboFiltre.Items.Add(""); 
 
             try
             {
                 // Récupérer tous les profils depuis la base
                 string query = "SELECT nom FROM profil";
-                List<object[]> records = access.Manager.ReqSelect(query, new Dictionary<string, object>()); // Pas besoin de paramètres
+                List<object[]> records = access.Manager.ReqSelect(query, new Dictionary<string, object>()); 
 
                 foreach (object[] record in records)
                 {
